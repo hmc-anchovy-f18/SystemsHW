@@ -238,7 +238,20 @@ int bitCount(int x) {
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+  int shift16 = x >> 16;
+  shift16 = x | shift16;
+  int shift8 = shift16 >> 8;
+  shift8 = shift16 | shift8;
+  int shift4 = shift8 >> 4;
+  shift4 = shift8 | shift4;
+  int shift2 = shift2 >> 2;
+  shift2 = shift4 | shift2;
+  int shift1 = shift2 >> 1;
+  shift1 = shift2 | shift1;
+
+  int mask = 0x01;
+  int answer = mask & shift1;
+  return answer;
 }
 /* 
  * leastBitPos - return a mask that marks the position of the
