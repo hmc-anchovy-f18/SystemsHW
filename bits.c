@@ -212,11 +212,10 @@ int copyLSB(int x) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  int mask = 0xFF;
+  int mask = 0x01;
   int z = x >> n;
-  mask = mask << 31;
-  mask = mask >> 31;
-  mask = mask << (32-n);
+  mask = mask >> n;
+  mask = mask << 1;
   mask = ~mask;
   int answer = z & mask;
   return answer;
@@ -229,7 +228,32 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  int count = 0x00;
+  // We want to add neighboring bits together and keep track of them
+  int mask1 = 0x55;
+  mask1 = (mask1<<8) + mask1;
+  mask1 = (mask1<<16) + mask1;
+  count = (x&mask1) + ((x>>1)&mask1);
+
+  int mask2 = 0x33;
+  mask2 = (mask2<<8) + mask2;
+  mask2 = (mask2<<16) + mask2;
+  count = (count&mask2) + ((count>>2)&mask2);
+
+  int mask4 = 0x0F;
+  mask4 = (mask4<<8) + mask4;
+  mask4 = (mask4<<16) + mask4;
+  count = (count&mask4) + ((count>>4)&mask4);
+
+  int mask8 = 0xFF;
+  mask8 = (mask8<<16) + mask8;
+  count = (count&mask8) + ((count>>8)&mask8);
+
+  int mask16 = 0xFF;
+  mask16 = (mask16<<8) + mask16;
+  count = (count&mask16) + ((count>>16)&mask16);
+
+  return count;
 }
 /* 
  * bang - Compute !x without using !
