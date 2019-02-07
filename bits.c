@@ -167,7 +167,7 @@ int isNotEqual(int x, int y) {
   //~( (x & y) | (~x & ~y))
   int a = x ^ y;
 
-  return a;
+  return !!a;
 }
 /* 
  * getByte - Extract byte n from word x
@@ -215,10 +215,11 @@ int logicalShift(int x, int n) {
   int mask = 0xFF;
   int z = x >> n;
   mask = mask << 31;
-  mask = mask >> (n-1);
+  mask = mask >> 31;
+  mask = mask << (32-n);
   mask = ~mask;
-  int an = z & mask;
-  return an;
+  int answer = z & mask;
+  return answer;
 }
 /*
  * bitCount - returns count of number of 1's in word
@@ -244,13 +245,17 @@ int bang(int x) {
   shift8 = shift16 | shift8;
   int shift4 = shift8 >> 4;
   shift4 = shift8 | shift4;
-  int shift2 = shift2 >> 2;
+  int shift2 = shift4 >> 2;
   shift2 = shift4 | shift2;
   int shift1 = shift2 >> 1;
   shift1 = shift2 | shift1;
 
   int mask = 0x01;
   int answer = mask & shift1;
+
+  answer = ~answer;
+  answer = answer ^ mask;
+  answer = ~answer;
   return answer;
 }
 /* 
@@ -262,7 +267,10 @@ int bang(int x) {
  *   Rating: 2 
  */
 int leastBitPos(int x) {
-  return 2;
+  int flipped = ~x;
+  flipped = flipped + 0x01;
+  int answer = x & flipped;
+  return answer;
 }
 /* 
  * TMax - return maximum two's complement integer 
@@ -271,7 +279,11 @@ int leastBitPos(int x) {
  *   Rating: 1
  */
 int tmax(void) {
-  return 2;
+  // Want to return 01111..11
+  int start = 0x80;
+  start = start << 24;
+  int answer = ~start;
+  return answer;
 }
 /* 
  * isNonNegative - return 1 if x >= 0, return 0 otherwise 
@@ -281,7 +293,9 @@ int tmax(void) {
  *   Rating: 3
  */
 int isNonNegative(int x) {
-  return 2;
+  int shifted = x >> 31;
+  shifted = !shifted;
+  return shifted;
 }
 /* 
  * isGreater - if x > y  then return 1, else return 0 
@@ -291,7 +305,30 @@ int isNonNegative(int x) {
  *   Rating: 3
  */
 int isGreater(int x, int y) {
-  return 2;
+  int shx = x >> 31;
+  int shy = y >> 31;
+  int different = shx ^ shy;
+  different = different & (~shx);
+
+  int same = x ^ y;
+  int shift16 = same >> 16;
+  shift16 = same | shift16;
+  int shift8 = shift16 >> 8;
+  shift8 = shift16 | shift8;
+  int shift4 = shift8 >> 4;
+  shift4 = shift8 | shift4;
+  int shift2 = shift4 >> 2;
+  shift2 = shift4 | shift2;
+  int shift1 = shift2 >> 1;
+  shift1 = shift2 | shift1;
+  
+  int flipped = ~shift1;
+  flipped = flipped >> 1;
+
+  same = shift1 & flipped;
+  same = same & x;
+
+  return !!(different | same);
 }
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30
@@ -302,7 +339,36 @@ int isGreater(int x, int y) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return 2;
+  int flipMask = x >> 31;
+  int noflipMask = ~flipMask;
+
+  int noflipAnswer = x >> n;
+  noflipAnswer = noflipAnswer & noflipMask;
+
+  int flipAnswer = ~x;
+  flipAnswer = flipAnswer + 0x01;
+  flipAnswer = flipAnswer >> n;
+  flipAnswer = ~flipAnswer;
+  flipAnswer = flipAnswer + 0x01;
+  flipAnswer = flipAnswer & flipMask;
+
+  int answer = flipAnswer + noflipAnswer;
+
+  return answer;
+
+  
+  /*
+    int save = x;
+    int r = save >> 31;
+    int s = r ^ save;
+    int mask = 0x01;
+    int m = r & mask; // 00..001 if neg, else 00...00
+    int next = s + m;
+    int F = next >> n;
+    int H = r ^ F;
+    int H2 = H + m;
+    return H2;
+    */
 }
 /* 
  * absVal - absolute value of x
@@ -313,7 +379,13 @@ int divpwr2(int x, int n) {
  *   Rating: 4
  */
 int absVal(int x) {
-  return 2;
+    int save = x;
+    int r = save >> 31;// all 1s for neg, all 0s for positive
+    int s = r ^ save;// flip the bits for neg, nothin for positive
+    int mask = 0x01;
+    int m = r & mask; // 00..001 if neg, else 00...000
+    int next = s + m;
+  return next;
 }
 /* 
  * addOK - Determine if can compute x+y without overflow
@@ -324,5 +396,18 @@ int absVal(int x) {
  *   Rating: 3
  */
 int addOK(int x, int y) {
-  return 2;
+  int sum = x + y;
+  int shiftx = x >> 31;
+  int shifty = y >> 31;
+  int shiftsum = sum >> 31;
+
+  int case1 = (~shiftsum) & shifty;
+  case1 = case1 & shiftx;
+
+  int case2 = shiftsum & (~shifty);
+  case2 = case2 & (~shiftx);
+
+  int answer = case1 | case2;
+
+  return !answer;
 }
