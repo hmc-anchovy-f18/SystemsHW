@@ -363,23 +363,17 @@ int isGreater(int x, int y) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-  int flipMask = x >> 31;
-  int noflipMask = ~flipMask;
-
-  int noflipAnswer = x >> n;
-  noflipAnswer = noflipAnswer & noflipMask;
-
-  int flipAnswer = ~x;
-  flipAnswer = flipAnswer + 0x01;
-  flipAnswer = flipAnswer >> n;
-  flipAnswer = ~flipAnswer;
-  flipAnswer = flipAnswer + 0x01;
-  flipAnswer = flipAnswer & flipMask;
-
-  int answer = flipAnswer + noflipAnswer;
-
+  // Know that if positive, x>>n
+  // If negative, (x+1)>>n
+  // Need to add 1 iff x is negative and needs to be 
+  // down. Adding trailing 1's in only the negative case 
+  // accounts for this
+  int mask = 1<<n;
+  mask = mask + (~0x00);
+  int shifted = x >> 31;
+  mask = shifted & mask;
+  int answer = (x + mask) >> n;
   return answer;
-
   
   /*
     int save = x;
